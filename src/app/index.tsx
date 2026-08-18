@@ -45,9 +45,6 @@ export default function App() {
       layers: { id: string; "source-layer"?: string }[];
     };
     style.sources.openmaptiles.url = tileSourceUrl;
-    style.layers = style.layers.filter(
-      (layer) => layer["source-layer"] !== "poi",
-    );
     return JSON.stringify(style);
   }, [tileSourceUrl]);
 
