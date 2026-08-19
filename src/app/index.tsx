@@ -6,10 +6,14 @@ import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 
 import customStyle from "@/assets/map/msu_marawi.json";
+import { LocationMarker } from "@/features/buildings/components/LocationMarker";
+import { useBuildings } from "@/features/buildings/hooks/building.query";
 
 const BOUNDS: LngLatBounds = [124.25, 7.99, 124.272, 8.006];
 
 export default function App() {
+  const { data: buildings } = useBuildings();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tileSourceUrl, setTileSourceUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,6 +65,18 @@ export default function App() {
             minZoom={13}
             maxZoom={17}
           />
+
+          {buildings?.map((building) => (
+            <LocationMarker
+              key={building.id}
+              id={building.id}
+              coords={[building.longitude, building.latitude]}
+              selected={building.id === selectedId}
+              onPress={() =>
+                setSelectedId(building.id === selectedId ? null : building.id)
+              }
+            />
+          ))}
         </Map>
       ) : null}
     </View>
