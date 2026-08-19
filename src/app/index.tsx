@@ -58,12 +58,12 @@ export default function App() {
         <Map mapStyle={mapStyle} className="flex-1">
           <Camera
             initialViewState={{
-              bounds: BOUNDS,
-              padding: { top: 24, right: 24, bottom: 24, left: 24 },
+              center: [124.2583, 7.9997],
+              zoom: 18,
             }}
             maxBounds={BOUNDS}
-            minZoom={13}
-            maxZoom={17}
+            minZoom={15}
+            maxZoom={19}
           />
 
           {buildings?.map((building) => (
