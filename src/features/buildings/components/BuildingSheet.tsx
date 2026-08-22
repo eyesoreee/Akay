@@ -31,14 +31,14 @@ export function BuildingSheet({
         <View className="flex-row gap-3 mt-1">
           <Pressable
             onPress={onExpand}
-            className="flex-1 rounded-xl border border-white/30 py-3 items-center"
+            className="flex-1 rounded-xl border border-white/30 py-3 items-center active:opacity-75"
           >
             <Text className="text-sm font-semibold text-white">
               View Details
             </Text>
           </Pressable>
 
-          <Pressable className="flex-1 rounded-xl bg-white py-3 items-center">
+          <Pressable className="flex-1 rounded-xl bg-white py-3 items-center active:opacity-75">
             <Text className="text-sm font-semibold text-semantic-primary">
               Directions
             </Text>
@@ -52,7 +52,7 @@ export function BuildingSheet({
             </Text>
           ) : null}
 
-          <Pressable className="rounded-xl bg-white py-3 items-center mt-1">
+          <Pressable className="rounded-xl bg-white py-3 items-center mt-1 active:opacity-75">
             <Text className="text-sm font-semibold text-semantic-primary">
               Directions
             </Text>

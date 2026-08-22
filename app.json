@@ -39,7 +39,8 @@
       "expo-image",
       "@maplibre/maplibre-react-native",
       "expo-asset",
-      "expo-sqlite"
+      "expo-sqlite",
+      "@react-native-vector-icons/ionicons"
     ],
     "experiments": {
       "typedRoutes": true,
