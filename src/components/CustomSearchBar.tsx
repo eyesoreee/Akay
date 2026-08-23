@@ -5,7 +5,6 @@ import { Pressable, TextInput, View } from "react-native";
 interface CustomSearchBarProps {
   isFocused: boolean;
   onFocus: () => void;
-  onBlur: () => void;
   value: string;
   onChange: (char: string) => void;
   onClear: () => void;
@@ -14,7 +13,6 @@ interface CustomSearchBarProps {
 export default function CustomSearchBar({
   isFocused,
   onFocus,
-  onBlur,
   value,
   onChange,
   onClear,
@@ -36,7 +34,6 @@ export default function CustomSearchBar({
         placeholderTextColor={colors.semantic.textOnPrimary}
         className="mx-3 flex-1 text-base text-semantic-textOnPrimary"
         onFocus={onFocus}
-        onBlur={onBlur}
         value={value}
         onChangeText={onChange}
       />

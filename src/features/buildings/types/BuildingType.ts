@@ -1,5 +1,5 @@
 export enum BuildingType {
-  ACADEMIC = "Academic",
+  ACADEMIC = "academic",
   ADMINISTRATIVE = "administrative",
   LIBRARY = "library",
   HEALTH = "health",

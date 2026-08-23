@@ -1,6 +1,6 @@
 import { Camera, CameraRef, Map } from "@maplibre/maplibre-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Keyboard, View } from "react-native";
+import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
 
 import customStyle from "@/assets/map/msu_marawi.json";
 import CustomSearchBar from "@/components/CustomSearchBar";
@@ -11,15 +11,19 @@ import { BuildingSheet } from "@/features/buildings/components/BuildingSheet";
 import { LocationMarker } from "@/features/buildings/components/LocationMarker";
 import { useBuildings } from "@/features/buildings/hooks/building.query";
 import { Building } from "@/features/buildings/types/building.entity";
+import { BuildingType } from "@/features/buildings/types/BuildingType";
 import { useLocalMapResources } from "@/hooks/useLocalMapResources";
 import { buildMapStyle } from "@/utils/buildMapStyle";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
+
+const BUILDING_TYPES = Object.values(BuildingType);
 
 export default function App() {
   const { data: buildings } = useBuildings();
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(
     null,
   );
+  const [selectedType, setSelectedType] = useState<BuildingType | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [detentIndex, setDetentIndex] = useState(0);
@@ -35,16 +39,18 @@ export default function App() {
 
   const filteredBuildings = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return [];
     return (
-      buildings?.filter(
-        (b) =>
+      buildings?.filter((b) => {
+        const matchesType = !selectedType || b.type === selectedType;
+        const matchesSearch =
+          !q ||
           b.name.toLowerCase().includes(q) ||
           b.type.toLowerCase().includes(q) ||
-          b.description?.toLowerCase().includes(q),
-      ) ?? []
+          b.description?.toLowerCase().includes(q);
+        return matchesType && matchesSearch;
+      }) ?? []
     );
-  }, [buildings, searchQuery]);
+  }, [buildings, searchQuery, selectedType]);
 
   useEffect(() => {
     if (selectedBuilding) sheet.current?.present();
@@ -89,7 +95,7 @@ export default function App() {
             maxZoom={19}
           />
 
-          {buildings?.map((building) => (
+          {filteredBuildings.map((building) => (
             <LocationMarker
               key={building.id}
               id={building.id}
@@ -109,11 +115,61 @@ export default function App() {
         <CustomSearchBar
           isFocused={isFocused}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           value={searchQuery}
           onChange={setSearchQuery}
           onClear={() => setSearchQuery("")}
         />
+      </View>
+
+      <View className="absolute top-[125px] left-0 right-0">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+        >
+          <Pressable
+            onPress={() => setSelectedType(null)}
+            className={`rounded-full px-4 py-2 ${
+              selectedType === null
+                ? "bg-semantic-primary"
+                : "bg-white border border-neutral-200"
+            }`}
+          >
+            <Text
+              className={`text-sm font-medium ${
+                selectedType === null
+                  ? "text-semantic-textOnPrimary"
+                  : "text-semantic-textPrimary"
+              }`}
+            >
+              all
+            </Text>
+          </Pressable>
+
+          {BUILDING_TYPES.map((type) => (
+            <Pressable
+              key={type}
+              onPress={() =>
+                setSelectedType(selectedType === type ? null : type)
+              }
+              className={`rounded-full px-4 py-2 ${
+                selectedType === type
+                  ? "bg-semantic-primary"
+                  : "bg-white border border-neutral-200"
+              }`}
+            >
+              <Text
+                className={`text-sm font-medium ${
+                  selectedType === type
+                    ? "text-semantic-textOnPrimary"
+                    : "text-semantic-textPrimary"
+                }`}
+              >
+                {type}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
       </View>
 
       <SearchResults

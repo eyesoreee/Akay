@@ -16,7 +16,7 @@ export default function SearchResults({
   if (!query) return null;
 
   return (
-    <View className="absolute left-4 right-4 top-36 overflow-hidden rounded-2xl bg-semantic-primary">
+    <View className="absolute left-4 right-4 top-[168px] overflow-hidden rounded-2xl bg-semantic-primary">
       {buildings.length > 0 ? (
         <FlatList
           data={buildings}
