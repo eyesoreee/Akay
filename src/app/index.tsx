@@ -1,4 +1,12 @@
-import { Camera, CameraRef, Map } from "@maplibre/maplibre-react-native";
+import {
+  Camera,
+  CameraRef,
+  LocationManager,
+  Map,
+  UserLocation,
+  useCurrentPosition,
+} from "@maplibre/maplibre-react-native";
+import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
 
@@ -14,6 +22,7 @@ import { Building } from "@/features/buildings/types/building.entity";
 import { BuildingType } from "@/features/buildings/types/BuildingType";
 import { useLocalMapResources } from "@/hooks/useLocalMapResources";
 import { buildMapStyle } from "@/utils/buildMapStyle";
+import { haversine } from "@/utils/distance";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 
 const BUILDING_TYPES = Object.values(BuildingType);
@@ -27,7 +36,9 @@ export default function App() {
   const [isFocused, setIsFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [detentIndex, setDetentIndex] = useState(0);
+  const [followUser, setFollowUser] = useState(false);
   const resources = useLocalMapResources();
+  const userPosition = useCurrentPosition();
 
   const sheet = useRef<TrueSheet>(null);
   const cameraRef = useRef<CameraRef>(null);
@@ -41,7 +52,8 @@ export default function App() {
     const q = searchQuery.toLowerCase().trim();
     return (
       buildings?.filter((b) => {
-        const matchesType = !selectedType || b.type === selectedType;
+        const matchesType =
+          !selectedType || b.type.toLowerCase() === selectedType.toLowerCase();
         const matchesSearch =
           !q ||
           b.name.toLowerCase().includes(q) ||
@@ -51,6 +63,16 @@ export default function App() {
       }) ?? []
     );
   }, [buildings, searchQuery, selectedType]);
+
+  const distanceToSelected = useMemo(() => {
+    if (!selectedBuilding || !userPosition) return null;
+    return haversine(
+      userPosition.coords.latitude,
+      userPosition.coords.longitude,
+      selectedBuilding.latitude,
+      selectedBuilding.longitude,
+    );
+  }, [selectedBuilding, userPosition]);
 
   useEffect(() => {
     if (selectedBuilding) sheet.current?.present();
@@ -73,6 +95,19 @@ export default function App() {
     });
   };
 
+  const handleLocateUser = () => {
+    if (!userPosition) return;
+    cameraRef.current?.flyTo({
+      center: [userPosition.coords.longitude, userPosition.coords.latitude],
+      zoom: 18,
+      duration: 1000,
+    });
+  };
+
+  useEffect(() => {
+    LocationManager.requestPermissions();
+  }, []);
+
   return (
     <View className="flex-1">
       {mapStyle ? (
@@ -93,6 +128,7 @@ export default function App() {
             maxBounds={BOUNDS}
             minZoom={15}
             maxZoom={19}
+            trackUserLocation={followUser ? "default" : undefined}
           />
 
           {filteredBuildings.map((building) => (
@@ -108,6 +144,8 @@ export default function App() {
               }
             />
           ))}
+
+          <UserLocation animated onPress={handleLocateUser} />
         </Map>
       ) : null}
 
@@ -121,7 +159,7 @@ export default function App() {
         />
       </View>
 
-      <View className="absolute top-[125px] left-0 right-0">
+      <View className="absolute top-[118px] left-0 right-0">
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -178,6 +216,22 @@ export default function App() {
         onSelect={handleSelectBuilding}
       />
 
+      <Pressable
+        onPress={() => {
+          setFollowUser((prev) => !prev);
+          if (!followUser) handleLocateUser();
+        }}
+        className={`absolute bottom-8 right-5 h-12 w-12 items-center justify-center rounded-full shadow-md ${
+          followUser ? "bg-semantic-primary" : "bg-white"
+        }`}
+      >
+        <Ionicons
+          name={followUser ? "locate" : "locate-outline"}
+          size={22}
+          color={followUser ? "#fff" : colors.semantic.textPrimary}
+        />
+      </Pressable>
+
       <TrueSheet
         ref={sheet}
         dimmed
@@ -188,6 +242,7 @@ export default function App() {
       >
         <BuildingSheet
           building={selectedBuilding}
+          distance={distanceToSelected}
           expanded={detentIndex === 1}
           onExpand={() => sheet.current?.resize(1)}
         />

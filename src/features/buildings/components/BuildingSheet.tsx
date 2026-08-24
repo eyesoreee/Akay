@@ -1,15 +1,18 @@
-import { Pressable, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
+import { formatDistance } from "@/utils/distance";
 import { Building } from "../types/building.entity";
 
 interface BuildingSheetProps {
   building: Building | null;
+  distance: number | null;
   expanded: boolean;
   onExpand: () => void;
 }
 
 export function BuildingSheet({
   building,
+  distance,
   expanded,
   onExpand,
 }: BuildingSheetProps) {
@@ -21,28 +24,28 @@ export function BuildingSheet({
         {building.name}
       </Text>
 
-      <View className="self-start rounded-full bg-semantic-accent px-3 py-1">
-        <Text className="text-xs font-semibold uppercase text-semantic-textOnAccent">
-          {building.type}
-        </Text>
+      <View className="flex-row items-center gap-2">
+        <View className="self-start rounded-full bg-semantic-accent px-3 py-1">
+          <Text className="text-xs font-semibold uppercase text-semantic-textOnAccent">
+            {building.type}
+          </Text>
+        </View>
+
+        {distance != null && (
+          <Text className="text-sm text-white/70">
+            {formatDistance(distance)}
+          </Text>
+        )}
       </View>
 
       {!expanded ? (
-        <View className="flex-row gap-3 mt-1">
-          <Pressable
+        <View className="mt-1">
+          <Text
             onPress={onExpand}
-            className="flex-1 rounded-xl border border-white/30 py-3 items-center active:opacity-75"
+            className="text-sm font-semibold text-white/80 underline"
           >
-            <Text className="text-sm font-semibold text-white">
-              View Details
-            </Text>
-          </Pressable>
-
-          <Pressable className="flex-1 rounded-xl bg-white py-3 items-center active:opacity-75">
-            <Text className="text-sm font-semibold text-semantic-primary">
-              Directions
-            </Text>
-          </Pressable>
+            View Details
+          </Text>
         </View>
       ) : (
         <>
@@ -51,12 +54,6 @@ export function BuildingSheet({
               {building.description}
             </Text>
           ) : null}
-
-          <Pressable className="rounded-xl bg-white py-3 items-center mt-1 active:opacity-75">
-            <Text className="text-sm font-semibold text-semantic-primary">
-              Directions
-            </Text>
-          </Pressable>
         </>
       )}
     </View>

@@ -19,7 +19,7 @@ export default function CustomSearchBar({
 }: CustomSearchBarProps) {
   return (
     <View
-      className={`flex-row items-center rounded-2xl bg-semantic-primary px-4 py-3 shadow-md border-2 ${
+      className={`flex-row items-center rounded-full bg-semantic-primary px-4 py-2 shadow-md border-2 ${
         isFocused ? "border-semantic-accent" : "border-transparent"
       }`}
     >
