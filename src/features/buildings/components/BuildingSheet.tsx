@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { formatDistance } from "@/utils/distance";
 import { Building } from "../types/building.entity";
@@ -7,14 +7,18 @@ interface BuildingSheetProps {
   building: Building | null;
   distance: number | null;
   expanded: boolean;
+  hasLocation: boolean;
   onExpand: () => void;
+  onDirections: () => void;
 }
 
 export function BuildingSheet({
   building,
   distance,
   expanded,
+  hasLocation,
   onExpand,
+  onDirections,
 }: BuildingSheetProps) {
   if (!building) return null;
 
@@ -39,13 +43,26 @@ export function BuildingSheet({
       </View>
 
       {!expanded ? (
-        <View className="mt-1">
-          <Text
+        <View className="flex-row gap-3 mt-1">
+          <Pressable
             onPress={onExpand}
-            className="text-sm font-semibold text-white/80 underline"
+            className={`${hasLocation ? "flex-1" : "flex-1"} rounded-xl border border-white/30 py-3 items-center active:opacity-75`}
           >
-            View Details
-          </Text>
+            <Text className="text-sm font-semibold text-white">
+              View Details
+            </Text>
+          </Pressable>
+
+          {hasLocation && (
+            <Pressable
+              onPress={onDirections}
+              className="flex-1 rounded-xl bg-white py-3 items-center active:opacity-75"
+            >
+              <Text className="text-sm font-semibold text-semantic-primary">
+                Directions
+              </Text>
+            </Pressable>
+          )}
         </View>
       ) : (
         <>

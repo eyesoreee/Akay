@@ -1,6 +1,8 @@
 import {
   Camera,
   CameraRef,
+  GeoJSONSource,
+  Layer,
   LocationManager,
   Map,
   UserLocation,
@@ -37,11 +39,13 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [detentIndex, setDetentIndex] = useState(0);
   const [followUser, setFollowUser] = useState(false);
+  const [showDirections, setShowDirections] = useState(false);
   const resources = useLocalMapResources();
   const userPosition = useCurrentPosition();
 
   const sheet = useRef<TrueSheet>(null);
   const cameraRef = useRef<CameraRef>(null);
+  const directionsDismiss = useRef(false);
 
   const mapStyle = useMemo(
     () => (resources ? buildMapStyle(customStyle, resources) : null),
@@ -74,13 +78,32 @@ export default function App() {
     );
   }, [selectedBuilding, userPosition]);
 
-  useEffect(() => {
-    if (selectedBuilding) sheet.current?.present();
-    else sheet.current?.dismiss();
-  }, [selectedBuilding]);
+  const routeData = useMemo(() => {
+    if (!showDirections || !selectedBuilding || !userPosition) return null;
+    return {
+      type: "FeatureCollection" as const,
+      features: [
+        {
+          type: "Feature" as const,
+          properties: {},
+          geometry: {
+            type: "LineString" as const,
+            coordinates: [
+              [userPosition.coords.longitude, userPosition.coords.latitude],
+              [selectedBuilding.longitude, selectedBuilding.latitude],
+            ],
+          },
+        },
+      ],
+    };
+  }, [showDirections, selectedBuilding, userPosition]);
 
   const handleDismiss = () => {
-    setSelectedBuilding(null);
+    if (!directionsDismiss.current) {
+      setSelectedBuilding(null);
+      setShowDirections(false);
+    }
+    directionsDismiss.current = false;
     setDetentIndex(0);
   };
 
@@ -88,6 +111,8 @@ export default function App() {
     setSelectedBuilding(building);
     setSearchQuery("");
     setIsFocused(false);
+    setShowDirections(false);
+    sheet.current?.present();
     cameraRef.current?.flyTo({
       center: [building.longitude, building.latitude],
       zoom: 18,
@@ -104,6 +129,12 @@ export default function App() {
     });
   };
 
+  const handleDirections = () => {
+    directionsDismiss.current = true;
+    setShowDirections(true);
+    sheet.current?.dismiss();
+  };
+
   useEffect(() => {
     LocationManager.requestPermissions();
   }, []);
@@ -117,6 +148,7 @@ export default function App() {
           onPress={() => {
             Keyboard.dismiss();
             setIsFocused(false);
+            if (showDirections) setShowDirections(false);
           }}
         >
           <Camera
@@ -137,15 +169,31 @@ export default function App() {
               id={building.id}
               coords={[building.longitude, building.latitude]}
               selected={building.id === selectedBuilding?.id}
-              onPress={() =>
-                setSelectedBuilding(
-                  building.id === selectedBuilding?.id ? null : building,
-                )
-              }
+              onPress={() => {
+                const next =
+                  building.id === selectedBuilding?.id ? null : building;
+                setSelectedBuilding(next);
+                if (next) sheet.current?.present();
+              }}
             />
           ))}
 
           <UserLocation animated onPress={handleLocateUser} />
+
+          {routeData && (
+            <GeoJSONSource id="route-source" data={routeData}>
+              <Layer
+                id="route-layer"
+                type="line"
+                source="route-source"
+                paint={{
+                  "line-color": colors.semantic.accent,
+                  "line-width": 3,
+                  "line-dasharray": [2, 2],
+                }}
+              />
+            </GeoJSONSource>
+          )}
         </Map>
       ) : null}
 
@@ -216,21 +264,23 @@ export default function App() {
         onSelect={handleSelectBuilding}
       />
 
-      <Pressable
-        onPress={() => {
-          setFollowUser((prev) => !prev);
-          if (!followUser) handleLocateUser();
-        }}
-        className={`absolute bottom-8 right-5 h-12 w-12 items-center justify-center rounded-full shadow-md ${
-          followUser ? "bg-semantic-primary" : "bg-white"
-        }`}
-      >
-        <Ionicons
-          name={followUser ? "locate" : "locate-outline"}
-          size={22}
-          color={followUser ? "#fff" : colors.semantic.textPrimary}
-        />
-      </Pressable>
+      {userPosition && (
+        <Pressable
+          onPress={() => {
+            setFollowUser((prev) => !prev);
+            if (!followUser) handleLocateUser();
+          }}
+          className={`absolute bottom-8 right-5 h-12 w-12 items-center justify-center rounded-full shadow-md ${
+            followUser ? "bg-semantic-primary" : "bg-white"
+          }`}
+        >
+          <Ionicons
+            name={followUser ? "locate" : "locate-outline"}
+            size={22}
+            color={followUser ? "#fff" : colors.semantic.textPrimary}
+          />
+        </Pressable>
+      )}
 
       <TrueSheet
         ref={sheet}
@@ -244,7 +294,9 @@ export default function App() {
           building={selectedBuilding}
           distance={distanceToSelected}
           expanded={detentIndex === 1}
+          hasLocation={userPosition != null}
           onExpand={() => sheet.current?.resize(1)}
+          onDirections={handleDirections}
         />
       </TrueSheet>
     </View>
