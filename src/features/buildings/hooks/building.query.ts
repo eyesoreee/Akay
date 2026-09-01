@@ -5,5 +5,6 @@ export function useBuildings() {
   return useQuery({
     queryKey: ["Building"],
     queryFn: getAllBuildings,
+    staleTime: 5 * 60 * 1000,
   });
 }

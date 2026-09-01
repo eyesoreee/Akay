@@ -2,6 +2,7 @@ import {
   Camera,
   CameraRef,
   GeoJSONSource,
+  Images,
   Layer,
   LocationManager,
   Map,
@@ -9,7 +10,7 @@ import {
   useCurrentPosition,
 } from "@maplibre/maplibre-react-native";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
 
 import customStyle from "@/assets/map/msu_marawi.json";
@@ -56,8 +57,7 @@ export default function App() {
     const q = searchQuery.toLowerCase().trim();
     return (
       buildings?.filter((b) => {
-        const matchesType =
-          !selectedType || b.type.toLowerCase() === selectedType.toLowerCase();
+        const matchesType = !selectedType || b.type === selectedType;
         const matchesSearch =
           !q ||
           b.name.toLowerCase().includes(q) ||
@@ -135,6 +135,25 @@ export default function App() {
     sheet.current?.dismiss();
   };
 
+  const selectedId = selectedBuilding?.id;
+  const selectedBuildingRef = useRef(selectedBuilding);
+
+  useEffect(() => {
+    selectedBuildingRef.current = selectedBuilding;
+  });
+
+  const handleMarkerPress = useCallback((building: Building) => {
+    const next = selectedBuildingRef.current?.id === building.id ? null : building;
+    setSelectedBuilding(next);
+    if (next) sheet.current?.present();
+  }, []);
+
+  const handleMapPress = useCallback(() => {
+    Keyboard.dismiss();
+    setIsFocused(false);
+    if (showDirections) setShowDirections(false);
+  }, [showDirections]);
+
   useEffect(() => {
     LocationManager.requestPermissions();
   }, []);
@@ -142,15 +161,7 @@ export default function App() {
   return (
     <View className="flex-1">
       {mapStyle ? (
-        <Map
-          mapStyle={mapStyle}
-          className="flex-1"
-          onPress={() => {
-            Keyboard.dismiss();
-            setIsFocused(false);
-            if (showDirections) setShowDirections(false);
-          }}
-        >
+        <Map mapStyle={mapStyle} className="flex-1" onPress={handleMapPress}>
           <Camera
             ref={cameraRef}
             initialViewState={{
@@ -163,18 +174,20 @@ export default function App() {
             trackUserLocation={followUser ? "default" : undefined}
           />
 
+          <Images
+            images={{
+              "custom-marker": require("@/assets/akay_location_marker.png"),
+              "custom-marker-selected": require("@/assets/akay_location_marker_selected.png"),
+            }}
+          />
+
           {filteredBuildings.map((building) => (
             <LocationMarker
               key={building.id}
               id={building.id}
               coords={[building.longitude, building.latitude]}
-              selected={building.id === selectedBuilding?.id}
-              onPress={() => {
-                const next =
-                  building.id === selectedBuilding?.id ? null : building;
-                setSelectedBuilding(next);
-                if (next) sheet.current?.present();
-              }}
+              selected={building.id === selectedId}
+              onPress={() => handleMarkerPress(building)}
             />
           ))}
 

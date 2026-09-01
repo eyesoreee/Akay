@@ -2,13 +2,11 @@ import * as SQLite from "expo-sqlite";
 
 const DB_NAME = "akay.db";
 
-let db: SQLite.SQLiteDatabase | null = null;
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
-export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
-  if (db) return db;
-
+async function openDatabase(): Promise<SQLite.SQLiteDatabase> {
   console.log("[DB] Opening database...");
-  db = await SQLite.openDatabaseAsync(DB_NAME);
+  const db = await SQLite.openDatabaseAsync(DB_NAME);
 
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
@@ -30,4 +28,9 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
 
   console.log("[DB] Database ready");
   return db;
+}
+
+export function getDatabase(): Promise<SQLite.SQLiteDatabase> {
+  if (!dbPromise) dbPromise = openDatabase();
+  return dbPromise;
 }

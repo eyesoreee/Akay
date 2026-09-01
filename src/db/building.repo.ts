@@ -37,9 +37,11 @@ export async function upsertBuildings(buildings: Building[]): Promise<void> {
   console.log(`[Repo] Upserting ${buildings.length} buildings to local...`);
   await db.withExclusiveTransactionAsync(async (txn) => {
     await txn.execAsync("DELETE FROM buildings");
+    const stmt = await txn.prepareAsync(
+      "INSERT INTO buildings (id, name, type, description, latitude, longitude, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    );
     for (const b of buildings) {
-      await txn.runAsync(
-        "INSERT INTO buildings (id, name, type, description, latitude, longitude, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      await stmt.executeAsync(
         b.id,
         b.name,
         b.type,
@@ -50,6 +52,7 @@ export async function upsertBuildings(buildings: Building[]): Promise<void> {
         b.updatedAt instanceof Date ? b.updatedAt.toISOString() : null,
       );
     }
+    await stmt.finalizeAsync();
   });
   console.log(`[Repo] Upsert complete — ${buildings.length} buildings stored`);
 }

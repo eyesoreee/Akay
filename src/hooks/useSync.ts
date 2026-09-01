@@ -19,10 +19,10 @@ export function useSync() {
       if (cancelled || inFlight) return;
       if (Date.now() - lastSyncAt < SYNC_MIN_INTERVAL_MS) return;
       inFlight = true;
-      lastSyncAt = Date.now();
       try {
         if (!(await isOnline())) return;
         await syncBuildings();
+        lastSyncAt = Date.now();
         if (cancelled) return;
         queryClient.invalidateQueries({ queryKey: ["Building"] });
       } catch (e) {

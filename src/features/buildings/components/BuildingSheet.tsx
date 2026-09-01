@@ -46,7 +46,7 @@ export function BuildingSheet({
         <View className="flex-row gap-3 mt-1">
           <Pressable
             onPress={onExpand}
-            className={`${hasLocation ? "flex-1" : "flex-1"} rounded-xl border border-white/30 py-3 items-center active:opacity-75`}
+            className="flex-1 rounded-xl border border-white/30 py-3 items-center active:opacity-75"
           >
             <Text className="text-sm font-semibold text-white">
               View Details

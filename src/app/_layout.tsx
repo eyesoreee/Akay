@@ -1,4 +1,7 @@
-import { InitialSyncScreen } from "@/components/InitialSyncScreen";
+import {
+  InitialSyncScreen,
+  InitialSyncStatus,
+} from "@/components/InitialSyncScreen";
 import { completeInitialSync, hasCompletedInitialSync } from "@/db/meta.repo";
 import { useSync } from "@/hooks/useSync";
 import { isOnline, syncBuildings } from "@/lib/sync";
@@ -68,13 +71,14 @@ export default function RootLayout() {
   }, []);
 
   if (phase !== "ready") {
-    const status =
-      phase === "loading"
-        ? "fetching"
-        : phase === "offline"
-          ? "offline"
-          : "error";
-    return <InitialSyncScreen status={status} onRetry={runInitialSync} />;
+    const STATUS: Record<Exclude<BootPhase, "ready">, InitialSyncStatus> = {
+      loading: "fetching",
+      offline: "offline",
+      error: "error",
+    };
+    return (
+      <InitialSyncScreen status={STATUS[phase]} onRetry={runInitialSync} />
+    );
   }
 
   return (
