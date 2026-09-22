@@ -67,7 +67,7 @@ export function BuildingSheet({
       ) : (
         <>
           {building.description ? (
-            <Text className="leading-6 text-white/80 mt-1">
+            <Text className="leading-6 text-xl text-white/70 text-justify mt-1">
               {building.description}
             </Text>
           ) : null}
