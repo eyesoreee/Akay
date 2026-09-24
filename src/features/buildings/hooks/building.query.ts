@@ -1,17 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { getBuilding, getBuildings } from "../api/building.api";
+import { useQuery } from "@powersync/react";
+import { Building } from "../types/building.entity";
 
 export function useBuildings() {
-  return useQuery({
-    queryKey: ["Building"],
-    queryFn: getBuildings,
-  });
+  return useQuery<Building>("SELECT * FROM Building");
 }
 
-export function useBuidling(id: string) {
-  return useQuery({
-    queryKey: ["building", id],
-    queryFn: () => getBuilding(id),
-    enabled: !!id,
+export function useBuilding(id: string) {
+  return useQuery<Building>("SELECT * FROM Building WHERE id = ?", [id], {
+    runQueryOnce: true,
   });
 }

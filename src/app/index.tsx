@@ -8,6 +8,7 @@ import {
   UserLocation,
   useCurrentPosition,
 } from "@maplibre/maplibre-react-native";
+import { useStatus } from "@powersync/react";
 import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
@@ -31,6 +32,7 @@ const BUILDING_TYPES = Object.values(BuildingType);
 
 export default function App() {
   const { data: buildings } = useBuildings();
+  const syncStatus = useStatus();
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(
     null,
   );
@@ -263,6 +265,22 @@ export default function App() {
         query={searchQuery}
         onSelect={handleSelectBuilding}
       />
+
+      {__DEV__ && (
+        <View className="absolute bottom-8 left-5 max-w-[60%] rounded bg-black/70 px-2 py-1">
+          <Text className="text-[10px] text-white">
+            {syncStatus.downloadError
+              ? `sync error: ${syncStatus.downloadError.message}`
+              : syncStatus.hasSynced
+                ? buildings?.length
+                  ? `synced ✓ (${buildings.length} buildings)`
+                  : "synced ✓"
+                : syncStatus.connected || syncStatus.connecting
+                  ? "syncing…"
+                  : "connecting…"}
+          </Text>
+        </View>
+      )}
 
       {userPosition && (
         <Pressable
