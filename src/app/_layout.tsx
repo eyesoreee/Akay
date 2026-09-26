@@ -11,7 +11,7 @@ const queryClient = new QueryClient();
 
 export default function RootLayout() {
   useEffect(() => {
-    setupPowerSync();
+    setupPowerSync().catch((e) => console.error("PowerSync setup failed", e));
   }, []);
 
   return (

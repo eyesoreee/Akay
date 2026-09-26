@@ -42,8 +42,13 @@ export default function App() {
   const [detentIndex, setDetentIndex] = useState(0);
   const [followUser, setFollowUser] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
+  const [bearing, setBearing] = useState(0);
+  const centerRef = useRef<[number, number]>([124.2583, 7.9997]);
   const resources = useLocalMapResources();
   const userPosition = useCurrentPosition();
+
+  const rotatedBearing = ((bearing % 360) + 360) % 360;
+  const isRotated = rotatedBearing > 5 && rotatedBearing < 355;
 
   const sheet = useRef<TrueSheet>(null);
   const cameraRef = useRef<CameraRef>(null);
@@ -147,6 +152,11 @@ export default function App() {
         <Map
           mapStyle={mapStyle}
           className="flex-1"
+          compass={false}
+          onRegionDidChange={(e) => {
+            setBearing(e.nativeEvent.bearing);
+            centerRef.current = e.nativeEvent.center;
+          }}
           onPress={() => {
             Keyboard.dismiss();
             setIsFocused(false);
@@ -296,6 +306,26 @@ export default function App() {
             name={followUser ? "locate" : "locate-outline"}
             size={22}
             color={followUser ? "#fff" : colors.semantic.textPrimary}
+          />
+        </Pressable>
+      )}
+
+      {isRotated && !followUser && (
+        <Pressable
+          onPress={() =>
+            cameraRef.current?.easeTo({
+              center: centerRef.current,
+              bearing: 0,
+              duration: 400,
+            })
+          }
+          className="absolute bottom-24 right-5 h-12 w-12 items-center justify-center rounded-full bg-white shadow-md"
+        >
+          <Ionicons
+            name="compass"
+            size={22}
+            color={colors.semantic.textPrimary}
+            style={{ transform: [{ rotate: `${-bearing}deg` }] }}
           />
         </Pressable>
       )}

@@ -12,6 +12,11 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://qcsjfjhlqvlfmxqiglhb.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_H9gYPQOZrIqegYqOwfaBXA_TrB07DvU",
+        "EXPO_PUBLIC_POWERSYNC_URL": "https://6ab36fcda77ca1231d2a7f69.powersync.journeyapps.com"
       }
     },
     "production": {
