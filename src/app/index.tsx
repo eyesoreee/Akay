@@ -2,6 +2,7 @@ import {
   Camera,
   CameraRef,
   GeoJSONSource,
+  Images,
   Layer,
   LocationManager,
   Map,
@@ -173,6 +174,13 @@ export default function App() {
             minZoom={15}
             maxZoom={19}
             trackUserLocation={followUser ? "default" : undefined}
+          />
+
+          <Images
+            images={{
+              "custom-marker": require("@/assets/akay_location_marker.png"),
+              "custom-marker-selected": require("@/assets/akay_location_marker_selected.png"),
+            }}
           />
 
           {filteredBuildings.map((building) => (
