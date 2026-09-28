@@ -6,9 +6,10 @@ import { haversine } from "@/utils/distance";
 
 type Pos = [number, number];
 
+const network = rawNetwork as FeatureCollection;
 const pathFinder = new PathFinder({
-  type: "FeatureCollection",
-  features: (rawNetwork as FeatureCollection).features.filter(
+  ...network,
+  features: network.features.filter(
     (f): f is Feature<LineString> => f.geometry.type === "LineString",
   ),
 });
@@ -47,6 +48,7 @@ export function routeWalking(from: Pos, to: Pos) {
     ...result.path.map(([lon, lat]): Pos => [lon, lat]),
     ...lead(to, finish),
   ];
+
   let distance = 0;
   for (let i = 1; i < coordinates.length; i++) {
     distance += haversine(

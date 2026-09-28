@@ -52,7 +52,8 @@ export default function App() {
   const centerRef = useRef<[number, number]>([124.2583, 7.9997]);
   const [routeFrom, setRouteFrom] = useState<[number, number] | null>(null);
   const resources = useLocalMapResources();
-  const userPosition = useCurrentPosition();
+  const [locationReady, setLocationReady] = useState(false);
+  const userPosition = useCurrentPosition({ enabled: locationReady });
 
   const rotatedBearing = ((bearing % 360) + 360) % 360;
   const isRotated = rotatedBearing > 5 && rotatedBearing < 355;
@@ -171,7 +172,11 @@ export default function App() {
   };
 
   useEffect(() => {
-    LocationManager.requestPermissions();
+    (async () => {
+      if (!(await LocationManager.requestPermissions())) return;
+      await LocationManager.getCurrentPosition();
+      setLocationReady(true);
+    })();
   }, []);
 
   return (
@@ -225,7 +230,9 @@ export default function App() {
             />
           ))}
 
-          <UserLocation animated onPress={handleLocateUser} />
+          {locationReady && (
+            <UserLocation animated onPress={handleLocateUser} />
+          )}
 
           {routeData && (
             <GeoJSONSource id="route-source" data={routeData} lineMetrics>
