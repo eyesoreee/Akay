@@ -25,6 +25,11 @@ import { useBuildings } from "@/features/buildings/hooks/building.query";
 import { Building } from "@/features/buildings/types/building.entity";
 import { BuildingType } from "@/features/buildings/types/BuildingType";
 import { useLocalMapResources } from "@/hooks/useLocalMapResources";
+import {
+  formatDistance,
+  formatDuration,
+  routeWalking,
+} from "@/lib/walkRouting";
 import { buildMapStyle } from "@/utils/buildMapStyle";
 import { haversine } from "@/utils/distance";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
@@ -45,6 +50,7 @@ export default function App() {
   const [showDirections, setShowDirections] = useState(false);
   const [bearing, setBearing] = useState(0);
   const centerRef = useRef<[number, number]>([124.2583, 7.9997]);
+  const [routeFrom, setRouteFrom] = useState<[number, number] | null>(null);
   const resources = useLocalMapResources();
   const userPosition = useCurrentPosition();
 
@@ -86,8 +92,27 @@ export default function App() {
     );
   }, [selectedBuilding, userPosition]);
 
+  const routeKey =
+    showDirections && routeFrom && selectedBuilding
+      ? `${routeFrom[0]},${routeFrom[1]}|${selectedBuilding.id}`
+      : null;
+  const route = useMemo(
+    () =>
+      routeKey && routeFrom && selectedBuilding
+        ? routeWalking(routeFrom, [
+            selectedBuilding.longitude,
+            selectedBuilding.latitude,
+          ])
+        : null,
+    [routeKey, routeFrom, selectedBuilding],
+  );
+
   const routeData = useMemo(() => {
-    if (!showDirections || !selectedBuilding || !userPosition) return null;
+    if (!showDirections || !selectedBuilding || !routeFrom) return null;
+    const coordinates = route?.coordinates ?? [
+      routeFrom,
+      [selectedBuilding.longitude, selectedBuilding.latitude],
+    ];
     return {
       type: "FeatureCollection" as const,
       features: [
@@ -96,15 +121,12 @@ export default function App() {
           properties: {},
           geometry: {
             type: "LineString" as const,
-            coordinates: [
-              [userPosition.coords.longitude, userPosition.coords.latitude],
-              [selectedBuilding.longitude, selectedBuilding.latitude],
-            ],
+            coordinates,
           },
         },
       ],
     };
-  }, [showDirections, selectedBuilding, userPosition]);
+  }, [showDirections, selectedBuilding, routeFrom, route]);
 
   const handleDismiss = () => {
     if (!directionsDismiss.current) {
@@ -139,6 +161,11 @@ export default function App() {
 
   const handleDirections = () => {
     directionsDismiss.current = true;
+    setRouteFrom(
+      userPosition
+        ? [userPosition.coords.longitude, userPosition.coords.latitude]
+        : null,
+    );
     setShowDirections(true);
     sheet.current?.dismiss();
   };
@@ -201,15 +228,48 @@ export default function App() {
           <UserLocation animated onPress={handleLocateUser} />
 
           {routeData && (
-            <GeoJSONSource id="route-source" data={routeData}>
+            <GeoJSONSource id="route-source" data={routeData} lineMetrics>
               <Layer
-                id="route-layer"
+                id="route-shadow"
                 type="line"
                 source="route-source"
+                layout={{
+                  "line-cap": "round",
+                  "line-join": "round",
+                }}
+                paint={{
+                  "line-color": "#000000",
+                  "line-width": 7,
+                  "line-opacity": 0.18,
+                  "line-blur": 3,
+                  "line-translate": [0, 2],
+                }}
+              />
+              <Layer
+                id="route-casing"
+                type="line"
+                source="route-source"
+                layout={{
+                  "line-cap": "round",
+                  "line-join": "round",
+                }}
+                paint={{
+                  "line-color": "#ffffff",
+                  "line-width": 5,
+                  "line-opacity": 0.95,
+                }}
+              />
+              <Layer
+                id="route-core"
+                type="line"
+                source="route-source"
+                layout={{
+                  "line-cap": "round",
+                  "line-join": "round",
+                }}
                 paint={{
                   "line-color": colors.semantic.accent,
                   "line-width": 3,
-                  "line-dasharray": [2, 2],
                 }}
               />
             </GeoJSONSource>
@@ -283,6 +343,17 @@ export default function App() {
         query={searchQuery}
         onSelect={handleSelectBuilding}
       />
+
+      {showDirections && route && !searchQuery && (
+        <View className="absolute left-0 right-0 top-[170px] items-center">
+          <View className="rounded-full bg-black/70 px-4 py-1.5">
+            <Text className="text-xs font-medium text-white">
+              {formatDistance(route.distance)} ·{" "}
+              {formatDuration(route.duration)} walk
+            </Text>
+          </View>
+        </View>
+      )}
 
       {__DEV__ && (
         <View className="absolute bottom-8 left-5 max-w-[60%] rounded bg-black/70 px-2 py-1">
