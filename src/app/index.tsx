@@ -1,3 +1,22 @@
+import customStyle from "@/assets/map/msu_marawi.json";
+import BuildingTypeFilter from "@/components/BuildingTypeFilter";
+import CustomSearchBar from "@/components/CustomSearchBar";
+import FollowUserButton from "@/components/FollowUserButton";
+import { RouteChip } from "@/components/RouteChip";
+import SearchResults from "@/components/SearchResults";
+import SyncChip from "@/components/SyncChip";
+import { colors } from "@/constants/color";
+import { BOUNDS } from "@/constants/msu_bounds";
+import { BuildingSheet } from "@/features/buildings/components/BuildingSheet";
+import { LocationMarker } from "@/features/buildings/components/LocationMarker";
+import { useBuildings } from "@/features/buildings/hooks/building.query";
+import { Building } from "@/features/buildings/types/building.entity";
+import { BuildingType } from "@/features/buildings/types/BuildingType";
+import { useLocalMapResources } from "@/hooks/useLocalMapResources";
+import { routeWalking } from "@/lib/walkRouting";
+import { buildMapStyle } from "@/utils/buildMapStyle";
+import { haversine } from "@/utils/distance";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import {
   Camera,
   CameraRef,
@@ -10,31 +29,8 @@ import {
   useCurrentPosition,
 } from "@maplibre/maplibre-react-native";
 import { useStatus } from "@powersync/react";
-import { Ionicons } from "@react-native-vector-icons/ionicons";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Keyboard, Pressable, ScrollView, Text, View } from "react-native";
-
-import customStyle from "@/assets/map/msu_marawi.json";
-import CustomSearchBar from "@/components/CustomSearchBar";
-import SearchResults from "@/components/SearchResults";
-import { colors } from "@/constants/color";
-import { BOUNDS } from "@/constants/msu_bounds";
-import { BuildingSheet } from "@/features/buildings/components/BuildingSheet";
-import { LocationMarker } from "@/features/buildings/components/LocationMarker";
-import { useBuildings } from "@/features/buildings/hooks/building.query";
-import { Building } from "@/features/buildings/types/building.entity";
-import { BuildingType } from "@/features/buildings/types/BuildingType";
-import { useLocalMapResources } from "@/hooks/useLocalMapResources";
-import {
-  formatDistance,
-  formatDuration,
-  routeWalking,
-} from "@/lib/walkRouting";
-import { buildMapStyle } from "@/utils/buildMapStyle";
-import { haversine } from "@/utils/distance";
-import { TrueSheet } from "@lodev09/react-native-true-sheet";
-
-const BUILDING_TYPES = Object.values(BuildingType);
+import { Keyboard, View } from "react-native";
 
 export default function App() {
   const { data: buildings } = useBuildings();
@@ -92,6 +88,7 @@ export default function App() {
     showDirections && routeFrom && selectedBuilding
       ? `${routeFrom[0]},${routeFrom[1]}|${selectedBuilding.id}`
       : null;
+
   const route = useMemo(
     () =>
       routeKey && routeFrom && selectedBuilding
@@ -230,41 +227,9 @@ export default function App() {
           )}
 
           {routeData && (
-            <GeoJSONSource id="route-source" data={routeData} lineMetrics>
+            <GeoJSONSource data={routeData}>
               <Layer
-                id="route-shadow"
                 type="line"
-                source="route-source"
-                layout={{
-                  "line-cap": "round",
-                  "line-join": "round",
-                }}
-                paint={{
-                  "line-color": "#000000",
-                  "line-width": 7,
-                  "line-opacity": 0.18,
-                  "line-blur": 3,
-                  "line-translate": [0, 2],
-                }}
-              />
-              <Layer
-                id="route-casing"
-                type="line"
-                source="route-source"
-                layout={{
-                  "line-cap": "round",
-                  "line-join": "round",
-                }}
-                paint={{
-                  "line-color": "#ffffff",
-                  "line-width": 5,
-                  "line-opacity": 0.95,
-                }}
-              />
-              <Layer
-                id="route-core"
-                type="line"
-                source="route-source"
                 layout={{
                   "line-cap": "round",
                   "line-join": "round",
@@ -289,56 +254,13 @@ export default function App() {
         />
       </View>
 
-      <View className="absolute top-[118px] left-0 right-0">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
-        >
-          <Pressable
-            onPress={() => setSelectedType(null)}
-            className={`rounded-full px-4 py-2 ${
-              selectedType === null
-                ? "bg-semantic-primary"
-                : "bg-white border border-neutral-200"
-            }`}
-          >
-            <Text
-              className={`text-sm font-medium ${
-                selectedType === null
-                  ? "text-semantic-textOnPrimary"
-                  : "text-semantic-textPrimary"
-              }`}
-            >
-              all
-            </Text>
-          </Pressable>
-
-          {BUILDING_TYPES.map((type) => (
-            <Pressable
-              key={type}
-              onPress={() =>
-                setSelectedType(selectedType === type ? null : type)
-              }
-              className={`rounded-full px-4 py-2 ${
-                selectedType === type
-                  ? "bg-semantic-primary"
-                  : "bg-white border border-neutral-200"
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  selectedType === type
-                    ? "text-semantic-textOnPrimary"
-                    : "text-semantic-textPrimary"
-                }`}
-              >
-                {type}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      </View>
+      <BuildingTypeFilter
+        onAllPress={() => setSelectedType(null)}
+        onTypePress={(type) =>
+          setSelectedType(selectedType === type ? null : type)
+        }
+        selectedType={selectedType}
+      />
 
       <SearchResults
         buildings={filteredBuildings}
@@ -347,45 +269,18 @@ export default function App() {
       />
 
       {showDirections && route && !searchQuery && (
-        <View className="absolute left-0 right-0 top-[170px] items-center">
-          <View className="rounded-full bg-black/70 px-4 py-1.5">
-            <Text className="text-xs font-medium text-white">
-              {formatDistance(route.distance)} ·{" "}
-              {formatDuration(route.duration)} walk
-            </Text>
-          </View>
-        </View>
+        <RouteChip duration={route.duration} distance={route.distance} />
       )}
 
       {__DEV__ && (
-        <View className="absolute bottom-8 left-5 max-w-[60%] rounded bg-black/70 px-2 py-1">
-          <Text className="text-[10px] text-white">
-            {syncStatus.downloadError
-              ? `sync error: ${syncStatus.downloadError.message}`
-              : syncStatus.hasSynced
-                ? buildings?.length
-                  ? `synced ✓ (${buildings.length} buildings)`
-                  : "synced ✓"
-                : syncStatus.connected || syncStatus.connecting
-                  ? "syncing…"
-                  : "connecting…"}
-          </Text>
-        </View>
+        <SyncChip status={syncStatus} buildingsCount={buildings?.length ?? 0} />
       )}
 
       {userPosition && (
-        <Pressable
+        <FollowUserButton
+          followUser={followUser}
           onPress={() => setFollowUser((prev) => !prev)}
-          className={`absolute bottom-10 right-6 h-16 w-16 items-center justify-center rounded-full shadow-md ${
-            followUser ? "bg-semantic-primary" : "bg-white"
-          }`}
-        >
-          <Ionicons
-            name={followUser ? "locate" : "locate-outline"}
-            size={30}
-            color={followUser ? "#fff" : colors.semantic.textPrimary}
-          />
-        </Pressable>
+        />
       )}
 
       <TrueSheet

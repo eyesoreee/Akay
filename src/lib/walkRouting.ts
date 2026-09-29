@@ -4,7 +4,7 @@ import PathFinder from "geojson-path-finder";
 import rawNetwork from "@/assets/map/msu-routing.json";
 import { haversine } from "@/utils/distance";
 
-type Pos = [number, number];
+export type Pos = [number, number];
 
 const network = rawNetwork as FeatureCollection;
 const pathFinder = new PathFinder({
