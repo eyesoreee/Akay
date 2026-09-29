@@ -48,15 +48,10 @@ export default function App() {
   const [detentIndex, setDetentIndex] = useState(0);
   const [followUser, setFollowUser] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
-  const [bearing, setBearing] = useState(0);
-  const centerRef = useRef<[number, number]>([124.2583, 7.9997]);
   const [routeFrom, setRouteFrom] = useState<[number, number] | null>(null);
   const resources = useLocalMapResources();
   const [locationReady, setLocationReady] = useState(false);
   const userPosition = useCurrentPosition({ enabled: locationReady });
-
-  const rotatedBearing = ((bearing % 360) + 360) % 360;
-  const isRotated = rotatedBearing > 5 && rotatedBearing < 355;
 
   const sheet = useRef<TrueSheet>(null);
   const cameraRef = useRef<CameraRef>(null);
@@ -185,11 +180,8 @@ export default function App() {
         <Map
           mapStyle={mapStyle}
           className="flex-1"
-          compass={false}
-          onRegionDidChange={(e) => {
-            setBearing(e.nativeEvent.bearing);
-            centerRef.current = e.nativeEvent.center;
-          }}
+          compass
+          compassPosition={{ top: 115, right: 20 }}
           onPress={() => {
             Keyboard.dismiss();
             setIsFocused(false);
@@ -206,6 +198,9 @@ export default function App() {
             minZoom={15}
             maxZoom={19}
             trackUserLocation={followUser ? "default" : undefined}
+            onTrackUserLocationChange={(e) =>
+              setFollowUser(e.nativeEvent.trackUserLocation != null)
+            }
           />
 
           <Images
@@ -380,38 +375,15 @@ export default function App() {
 
       {userPosition && (
         <Pressable
-          onPress={() => {
-            setFollowUser((prev) => !prev);
-            if (!followUser) handleLocateUser();
-          }}
-          className={`absolute bottom-8 right-5 h-12 w-12 items-center justify-center rounded-full shadow-md ${
+          onPress={() => setFollowUser((prev) => !prev)}
+          className={`absolute bottom-10 right-6 h-16 w-16 items-center justify-center rounded-full shadow-md ${
             followUser ? "bg-semantic-primary" : "bg-white"
           }`}
         >
           <Ionicons
             name={followUser ? "locate" : "locate-outline"}
-            size={22}
+            size={30}
             color={followUser ? "#fff" : colors.semantic.textPrimary}
-          />
-        </Pressable>
-      )}
-
-      {isRotated && !followUser && (
-        <Pressable
-          onPress={() =>
-            cameraRef.current?.easeTo({
-              center: centerRef.current,
-              bearing: 0,
-              duration: 400,
-            })
-          }
-          className="absolute bottom-24 right-5 h-12 w-12 items-center justify-center rounded-full bg-white shadow-md"
-        >
-          <Ionicons
-            name="compass"
-            size={22}
-            color={colors.semantic.textPrimary}
-            style={{ transform: [{ rotate: `${-bearing}deg` }] }}
           />
         </Pressable>
       )}
