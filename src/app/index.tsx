@@ -44,10 +44,16 @@ export default function App() {
   const [detentIndex, setDetentIndex] = useState(0);
   const [followUser, setFollowUser] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
-  const [routeFrom, setRouteFrom] = useState<[number, number] | null>(null);
   const resources = useLocalMapResources();
   const [locationReady, setLocationReady] = useState(false);
   const userPosition = useCurrentPosition({ enabled: locationReady });
+  const routeFrom = useMemo<[number, number] | null>(
+    () =>
+      showDirections && userPosition
+        ? [userPosition.coords.longitude, userPosition.coords.latitude]
+        : null,
+    [showDirections, userPosition],
+  );
 
   const sheet = useRef<TrueSheet>(null);
   const cameraRef = useRef<CameraRef>(null);
@@ -154,11 +160,6 @@ export default function App() {
 
   const handleDirections = () => {
     directionsDismiss.current = true;
-    setRouteFrom(
-      userPosition
-        ? [userPosition.coords.longitude, userPosition.coords.latitude]
-        : null,
-    );
     setShowDirections(true);
     sheet.current?.dismiss();
   };
@@ -166,7 +167,6 @@ export default function App() {
   useEffect(() => {
     (async () => {
       if (!(await LocationManager.requestPermissions())) return;
-      await LocationManager.getCurrentPosition();
       setLocationReady(true);
     })();
   }, []);
