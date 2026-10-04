@@ -46,7 +46,10 @@ export default function App() {
   const [showDirections, setShowDirections] = useState(false);
   const resources = useLocalMapResources();
   const [locationReady, setLocationReady] = useState(false);
-  const userPosition = useCurrentPosition({ enabled: locationReady });
+  const userPosition = useCurrentPosition({
+    enabled: locationReady,
+    minDisplacement: 2,
+  });
   const routeFrom = useMemo<[number, number] | null>(
     () =>
       showDirections && userPosition
@@ -235,7 +238,12 @@ export default function App() {
           ))}
 
           {locationReady && (
-            <UserLocation animated onPress={handleLocateUser} />
+            <UserLocation
+              animated
+              minDisplacement={2}
+              accuracy
+              onPress={handleLocateUser}
+            />
           )}
 
           {routeData && (
