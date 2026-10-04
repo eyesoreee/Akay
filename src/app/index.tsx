@@ -164,6 +164,18 @@ export default function App() {
     sheet.current?.dismiss();
   };
 
+  const handleTypeChange = (nextType: BuildingType | null) => {
+    setSelectedType(nextType);
+    if (
+      selectedBuilding &&
+      nextType &&
+      selectedBuilding.type.toLowerCase() !== nextType.toLowerCase()
+    ) {
+      setSelectedBuilding(null);
+      setShowDirections(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       if (!(await LocationManager.requestPermissions())) return;
@@ -257,7 +269,7 @@ export default function App() {
       <BuildingTypeFilter
         onAllPress={() => setSelectedType(null)}
         onTypePress={(type) =>
-          setSelectedType(selectedType === type ? null : type)
+          handleTypeChange(selectedType === type ? null : type)
         }
         selectedType={selectedType}
       />
