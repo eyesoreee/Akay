@@ -1,4 +1,4 @@
-# Screenshot
+# Screenshots
 
 <img width="1080" height="2340" alt="Screenshot_20261006_074212_Akay" src="https://github.com/user-attachments/assets/27ac3e49-4a17-449f-9d93-f51cdfcfcda5" />
 <img width="1080" height="2340" alt="Screenshot_20261006_074110_Akay" src="https://github.com/user-attachments/assets/8fb37cbb-4083-4f7a-9632-edf905ec23f5" />
